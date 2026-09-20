@@ -339,7 +339,18 @@ class FlappyBirdEnv(gymnasium.Env):
         )
 
     def reset(self, seed=None, options=None):
-        """Resets the environment (starts a new game)."""
+        """Resets the environment (starts a new game).
+
+        Once a caller has passed an explicit `seed` here, we
+        keep a dedicated generator and use it to mint each subsequent
+        `seed=None` reset's effective seed, so every episode's course is a
+        fixed function of (original seed, episode index) regardless of how
+        long any earlier episode ran. 
+        """
+        if seed is not None:
+            self._episode_seed_rng = np.random.default_rng(seed)
+        elif getattr(self, "_episode_seed_rng", None) is not None:
+            seed = int(self._episode_seed_rng.integers(0, 2**31 - 1))
         super().reset(seed=seed)
 
         # Player's info:
